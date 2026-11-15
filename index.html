@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Riddim Lab</title>
+<meta name="theme-color" content="#0b0b0d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#0b0b0d;--card:#151518;--line:#26262b;--red:#e11d2e;--red2:#ff4757;--text:#f2f2f4;--mute:#8d8d96}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:15px;
+    background-image:radial-gradient(circle at 80% -10%,rgba(225,29,46,.25),transparent 45%)}
+  header{padding:22px 18px 8px;display:flex;align-items:center;justify-content:space-between}
+  h1{font-family:"Bebas Neue",sans-serif;font-size:40px;letter-spacing:1.5px;margin:0;line-height:1}
+  h1 span{color:var(--red)}
+  .sub{color:var(--mute);font-size:13px;margin-top:4px}
+  .gear{background:var(--card);border:1px solid var(--line);color:var(--text);border-radius:12px;width:44px;height:44px;font-size:20px}
+  main{padding:8px 14px 60px;max-width:640px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px}
+  label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--mute);margin:12px 0 6px}
+  label:first-child{margin-top:0}
+  input[type=text],input[type=password],textarea,select{width:100%;background:#0e0e11;border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:12px;font:inherit;font-size:16px}
+  textarea{resize:vertical}
+  #lyrics{min-height:220px;font-family:ui-monospace,Menlo,monospace;font-size:14px;line-height:1.5}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--red)}
+  .row{display:flex;gap:10px;align-items:center}
+  input[type=range]{flex:1;accent-color:var(--red)}
+  .pill{background:#0e0e11;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-weight:700;min-width:70px;text-align:center}
+  .toggle{display:flex;align-items:center;gap:10px;margin-top:14px;color:var(--text);font-size:15px;text-transform:none;letter-spacing:0;font-weight:600}
+  .toggle input{width:22px;height:22px;accent-color:var(--red)}
+  .btn{width:100%;border:0;border-radius:14px;padding:16px;font:inherit;font-weight:700;font-size:17px;color:#fff;
+    background:linear-gradient(135deg,var(--red),#a10f1d);margin-top:16px;box-shadow:0 8px 24px rgba(225,29,46,.3)}
+  .btn:disabled{opacity:.5}
+  .btn.ghost{background:#0e0e11;border:1px solid var(--line);box-shadow:none;font-size:15px;padding:12px}
+  #status{margin-top:12px;font-size:14px;color:var(--mute);min-height:20px;white-space:pre-wrap}
+  #status.err{color:var(--red2)}
+  .bars{display:none;gap:3px;height:22px;align-items:end;margin-top:10px}
+  .bars.on{display:flex}
+  .bars i{width:5px;background:var(--red);border-radius:2px;animation:b 1s infinite ease-in-out}
+  @keyframes b{0%,100%{height:4px}50%{height:22px}}
+  h2{font-family:"Bebas Neue",sans-serif;font-size:26px;letter-spacing:1px;margin:22px 4px 10px}
+  .song{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px}
+  .song b{display:block;font-size:16px}
+  .song .meta{color:var(--mute);font-size:12px;margin:3px 0 10px;word-break:break-word}
+  .song audio{width:100%;height:40px}
+  .acts{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+  .acts a,.acts button{flex:1;text-align:center;background:#0e0e11;border:1px solid var(--line);color:var(--text);border-radius:10px;
+    padding:10px 6px;font:inherit;font-size:13px;font-weight:600;text-decoration:none}
+  .acts .del{color:var(--red2)}
+  .empty{color:var(--mute);text-align:center;padding:24px}
+  .hint{color:var(--mute);font-size:12px;margin-top:6px;line-height:1.5}
+  .hint a{color:var(--red2)}
+  #settings{display:none}
+  #settings.open{display:block}
+  #log{background:#0e0e11;border:1px solid var(--line);border-radius:10px;padding:10px;font:12px ui-monospace,monospace;
+    color:var(--mute);max-height:220px;overflow:auto;white-space:pre-wrap;margin-top:8px;display:none}
+  .small{font-size:13px;color:var(--mute)}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>RIDDIM <span>LAB</span></h1>
+    <div class="sub">Your own song generator · free · ACE-Step</div>
+  </div>
+  <button class="gear" id="gearBtn" aria-label="Settings">⚙</button>
+</header>
+
+<main>
+  <section class="card" id="settings">
+    <label for="token">Hugging Face token</label>
+    <input type="password" id="token" placeholder="hf_..." autocomplete="off">
+    <div class="hint">Free at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a> → New token → type "Read". It's saved only on this phone. Without it you still get a small daily allowance.</div>
+
+    <label for="space">Model space</label>
+    <input type="text" id="space" value="ACE-Step/Ace-Step-v1.5">
+    <div class="hint">Leave this alone unless the default one is down.</div>
+
+    <label for="endpoint">Endpoint</label>
+    <select id="endpoint"><option value="">Auto (recommended)</option></select>
+    <button class="btn ghost" id="scanBtn">Connect &amp; scan endpoints</button>
+    <button class="btn ghost" id="logBtn">Show debug log</button>
+    <div id="log"></div>
+  </section>
+
+  <section class="card">
+    <label for="title">Song title</label>
+    <input type="text" id="title" placeholder="e.g. Gyal Dem Bad">
+
+    <label for="tags">Style / tags</label>
+    <textarea id="tags" rows="3" placeholder="dancehall, male vocals, deep bass, 95 bpm, gritty, Jamaican patois"></textarea>
+
+    <label for="lyrics">Lyrics</label>
+    <textarea id="lyrics" placeholder="[Intro]&#10;...&#10;&#10;[Verse]&#10;...&#10;&#10;[Chorus]&#10;..."></textarea>
+    <div class="hint">Use section tags like [Verse], [Chorus], [Bridge]. Leave a blank line between sections.</div>
+
+    <label>Length</label>
+    <div class="row">
+      <input type="range" id="dur" min="30" max="240" step="10" value="120">
+      <div class="pill" id="durOut">2:00</div>
+    </div>
+
+    <label class="toggle"><input type="checkbox" id="instr"> Instrumental (no vocals)</label>
+
+    <button class="btn" id="genBtn">🎵 Generate song</button>
+    <div class="bars" id="bars"><i></i><i style="animation-delay:.1s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.4s"></i><i style="animation-delay:.5s"></i><i style="animation-delay:.6s"></i></div>
+    <div id="status"></div>
+  </section>
+
+  <h2>My Songs</h2>
+  <div id="library"></div>
+</main>
+
+<script type="module">
+import { Client } from "https://cdn.jsdelivr.net/npm/@gradio/client/dist/index.min.js";
+
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d = "") { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+};
+
+// ---------- saved settings & draft ----------
+$("token").value = store.get("rl_token");
+$("space").value = store.get("rl_space", "ACE-Step/Ace-Step-v1.5");
+["title", "tags", "lyrics"].forEach(id => {
+  $(id).value = store.get("rl_draft_" + id);
+  $(id).addEventListener("input", () => store.set("rl_draft_" + id, $(id).value));
+});
+$("dur").value = store.get("rl_dur", "120");
+$("instr").checked = store.get("rl_instr") === "1";
+$("token").addEventListener("change", () => { store.set("rl_token", $("token").value.trim()); client = null; });
+$("space").addEventListener("change", () => { store.set("rl_space", $("space").value.trim()); client = null; apiInfo = null; });
+$("instr").addEventListener("change", () => store.set("rl_instr", $("instr").checked ? "1" : "0"));
+
+const fmt = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const showDur = () => { $("durOut").textContent = fmt(+$("dur").value); store.set("rl_dur", $("dur").value); };
+$("dur").addEventListener("input", showDur); showDur();
+
+$("gearBtn").onclick = () => $("settings").classList.toggle("open");
+$("logBtn").onclick = () => { const l = $("log"); l.style.display = l.style.display === "block" ? "none" : "block"; };
+
+const log = (...a) => {
+  const line = a.map(x => typeof x === "string" ? x : JSON.stringify(x, null, 1)).join(" ");
+  $("log").textContent += line.slice(0, 4000) + "\n";
+  $("log").scrollTop = 1e9;
+  console.log(...a);
+};
+const status = (msg, err = false) => { $("status").textContent = msg; $("status").classList.toggle("err", err); };
+
+// ---------- connect to the model ----------
+let client = null, apiInfo = null, curSpace = null;
+
+// Backup copies of the model to try if the first one is broken or asleep
+const BACKUP_SPACES = ["ACE-Step/Ace-Step-v1.5", "MBLF/ACE-Step-1.5", "ACE-Step/ACE-Step"];
+const spaceList = () => {
+  const mine = $("space").value.trim();
+  return [mine, ...BACKUP_SPACES.filter(s => s !== mine)].filter(Boolean);
+};
+
+async function connect(space = $("space").value.trim()) {
+  if (client && apiInfo && curSpace === space) return;
+  client = null; apiInfo = null; curSpace = space;
+  const token = $("token").value.trim();
+  status("Connecting to " + space + "…");
+  log("Connecting:", space, token ? "(with token)" : "(no token)");
+  const opts = token ? { token, hf_token: token } : {};
+  client = await Client.connect(space, opts);
+  apiInfo = await client.view_api();
+  const names = Object.keys(apiInfo.named_endpoints || {});
+  log("Endpoints found:", names.join(", "));
+  const sel = $("endpoint"), saved = store.get("rl_endpoint");
+  sel.innerHTML = '<option value="">Auto (recommended)</option>' +
+    names.map(n => `<option value="${n}">${n}</option>`).join("");
+  if (names.includes(saved)) sel.value = saved;
+}
+
+// Find a text message from the model, e.g. "❌ Model not fully initialized"
+function findMessage(data) {
+  for (const x of (Array.isArray(data) ? data : [])) {
+    if (typeof x === "string" && /❌|error|not .*initiali|failed|exceeded|quota/i.test(x)) return x;
+  }
+  return null;
+}
+$("endpoint").addEventListener("change", () => store.set("rl_endpoint", $("endpoint").value));
+$("scanBtn").onclick = async () => {
+  client = null; apiInfo = null;
+  try { await connect(); status("Connected ✔ " + Object.keys(apiInfo.named_endpoints).length + " endpoints found."); }
+  catch (e) { status("Couldn't connect: " + (e.message || e), true); log("Connect error", String(e)); }
+};
+
+const pName = p => ((p.parameter_name || "") + " " + (p.label || "")).toLowerCase();
+
+function pickEndpoint() {
+  const eps = apiInfo.named_endpoints || {};
+  const manual = $("endpoint").value;
+  if (manual && eps[manual]) return manual;
+  let best = null, bestScore = -1;
+  for (const [name, info] of Object.entries(eps)) {
+    const ps = (info.parameters || []).map(pName).join(" | ");
+    const rs = JSON.stringify(info.returns || []).toLowerCase();
+    let s = 0;
+    if (/lyric/.test(ps)) s += 5;
+    if (/caption|prompt|tag|style|desc/.test(ps)) s += 3;
+    if (/duration|length/.test(ps)) s += 2;
+    if (/audio/.test(rs)) s += 3;
+    if (/generat|text2music|text_to_music/.test(name.toLowerCase())) s += 2;
+    if (/sample|format|random|example|lm|init|load|upload|repaint|cover|extract/.test(name.toLowerCase())) s -= 2;
+    if (s > bestScore) { bestScore = s; best = name; }
+  }
+  return best;
+}
+
+function buildInputs(info) {
+  const tags = $("tags").value.trim(), lyrics = $("lyrics").value.trim();
+  const dur = +$("dur").value, instr = $("instr").checked;
+  // Send values in order (positional) — some params have no name, which breaks keyword mode
+  const out = [];
+  for (const p of info.parameters || []) {
+    const n = pName(p);
+    let v = p.parameter_has_default ? p.parameter_default : null;
+    if (/lyric/.test(n)) v = instr ? "[instrumental]" : lyrics;
+    else if (/caption|prompt|tag|style|desc/.test(n) && !/negative|lm_|_lm|lm /.test(n)) v = tags;
+    else if (/audio_duration|duration|length/.test(n) && !/format/.test(n)) v = dur;
+    else if (/instrumental/.test(n)) v = instr;
+    else if (/batch/.test(n)) v = 1;
+    out.push(v);
+  }
+  return out;
+}
+
+function findAudio(data) {
+  const stack = [data];
+  while (stack.length) {
+    const x = stack.shift();
+    if (!x) continue;
+    if (typeof x === "string" && /^https?:.*\.(mp3|wav|flac|ogg|m4a)(\?|$)/i.test(x)) return x;
+    if (typeof x === "object") {
+      if (x.url && /\.(mp3|wav|flac|ogg|m4a)|audio/i.test((x.url || "") + (x.mime_type || "") + (x.path || ""))) return x.url;
+      if (Array.isArray(x)) stack.push(...x); else stack.push(...Object.values(x));
+    }
+  }
+  return null;
+}
+
+// ---------- generate ----------
+let timer = null;
+$("genBtn").onclick = async () => {
+  const tags = $("tags").value.trim(), lyrics = $("lyrics").value.trim();
+  if (!tags) return status("Add a style / tags first.", true);
+  if (!lyrics && !$("instr").checked) return status("Add lyrics, or tick Instrumental.", true);
+
+  $("genBtn").disabled = true; $("bars").classList.add("on");
+  const t0 = Date.now(); let phase = "Starting…";
+  timer = setInterval(() => status(phase + "  ·  " + fmt(Math.round((Date.now() - t0) / 1000))), 1000);
+
+  const tryOne = async space => {
+    phase = "Connecting to " + space + "…";
+    await connect(space);
+    const ep = pickEndpoint();
+    if (!ep) throw new Error("No generate endpoint found on " + space);
+    const info = apiInfo.named_endpoints[ep];
+    const inputs = buildInputs(info);
+    log("Using endpoint:", ep);
+    log("Inputs:", (info.parameters || []).map((p, i) => `${i}. ${p.parameter_name || p.label || "?"} = ${JSON.stringify(inputs[i])}`.slice(0, 120)).join("\n"));
+    phase = "In the queue…";
+
+    const job = client.submit(ep, inputs);
+    let result = null;
+    for await (const msg of job) {
+      if (msg.type === "status") {
+        if (msg.stage === "error") throw new Error(msg.message || "The model returned an error.");
+        if (msg.queue && msg.position != null) phase = `In the queue — position ${msg.position + 1}`;
+        else if (msg.stage === "pending" || msg.stage === "generating") phase = "Making your song… 🎶";
+        if (msg.progress_data && msg.progress_data[0]) {
+          const pd = msg.progress_data[0];
+          if (pd.index != null && pd.length) phase = `Making your song… ${Math.round(pd.index / pd.length * 100)}%`;
+        }
+      }
+      if (msg.type === "data") {
+        result = msg.data;
+        if (findAudio(msg.data)) break;
+        const m = findMessage(msg.data);
+        if (m) { log("Model said:", m); throw new Error(m); }
+      }
+    }
+    const url = findAudio(result);
+    if (!url) { log("Got data:", result); throw new Error("No audio came back from " + space); }
+    return url;
+  };
+
+  try {
+    let url = null, lastErr = null;
+    for (const space of spaceList()) {
+      try { url = await tryOne(space); log("Success on", space); break; }
+      catch (e) {
+        lastErr = e; log("✖ " + space + ": " + String(e.message || e).slice(0, 300));
+        // Quota problems won't be fixed by another copy (same account allowance)
+        if (/quota|exceeded/i.test(String(e.message))) break;
+        client = null; apiInfo = null; curSpace = null;
+      }
+    }
+    if (!url) throw lastErr || new Error("No model copy worked.");
+
+    phase = "Saving to your library…";
+    let blob = null;
+    try {
+      const token = $("token").value.trim();
+      const r = await fetch(url, token ? { headers: { Authorization: "Bearer " + token } } : {});
+      if (r.ok) blob = await r.blob();
+    } catch (e) { log("Download failed, keeping link only", String(e)); }
+
+    await saveSong({
+      id: Date.now(), title: $("title").value.trim() || "Untitled",
+      tags, lyrics, dur: +$("dur").value, blob, url, created: new Date().toISOString()
+    });
+    clearInterval(timer);
+    status("Done ✔ Your song is in My Songs below.");
+    renderLibrary();
+  } catch (e) {
+    clearInterval(timer);
+    const m = String(e.message || e);
+    log("Error:", m);
+    if (/quota|ZeroGPU|exceeded|GPU/i.test(m)) status("Daily free GPU time used up. Add your Hugging Face token in ⚙, or try again tomorrow.\n\n" + m, true);
+    else if (/initiali|No model copy|No audio|endpoint/i.test(m)) status("The free model copies are down or waking up right now. Wait 10–15 minutes and try again.\n\nLast message: " + m, true);
+    else status("Something went wrong: " + m, true);
+    client = null; apiInfo = null;
+  } finally {
+    $("genBtn").disabled = false; $("bars").classList.remove("on");
+  }
+};
+
+// ---------- library (saved on this phone) ----------
+let dbp = null;
+function db() {
+  if (dbp) return dbp;
+  dbp = new Promise((res, rej) => {
+    const r = indexedDB.open("riddimlab", 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("songs", { keyPath: "id" });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+  return dbp;
+}
+async function tx(mode, fn) {
+  const d = await db();
+  return new Promise((res, rej) => {
+    const t = d.transaction("songs", mode); const s = t.objectStore("songs");
+    const r = fn(s); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error);
+  });
+}
+const saveSong = s => tx("readwrite", st => st.put(s)).catch(e => log("Save failed", String(e)));
+const allSongs = () => tx("readonly", st => st.getAll()).catch(() => []);
+const delSong = id => tx("readwrite", st => st.delete(id));
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const urls = [];
+
+async function renderLibrary() {
+  urls.forEach(URL.revokeObjectURL); urls.length = 0;
+  const songs = (await allSongs() || []).sort((a, b) => b.id - a.id);
+  const lib = $("library");
+  if (!songs.length) { lib.innerHTML = '<div class="empty">No songs yet. Make your first one above 👆</div>'; return; }
+  lib.innerHTML = "";
+  for (const s of songs) {
+    const src = s.blob ? URL.createObjectURL(s.blob) : s.url;
+    if (s.blob) urls.push(src);
+    const ext = (s.blob && /wav/.test(s.blob.type)) ? "wav" : "mp3";
+    const fname = (s.title || "song").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-") + "." + ext;
+    const el = document.createElement("div");
+    el.className = "song";
+    el.innerHTML = `<b>${esc(s.title)}</b>
+      <div class="meta">${esc(s.tags).slice(0, 140)} · ${fmt(s.dur || 0)} · ${new Date(s.created).toLocaleDateString()}</div>
+      <audio controls preload="none" src="${src}"></audio>
+      <div class="acts">
+        <a href="${src}" download="${esc(fname)}">⬇ Download</a>
+        <button data-a="reuse">↺ Reuse</button>
+        <button data-a="del" class="del">🗑 Delete</button>
+      </div>
+      ${s.blob ? "" : '<div class="small" style="margin-top:8px">Link only — download it soon, these expire.</div>'}`;
+    el.querySelector('[data-a="reuse"]').onclick = () => {
+      $("title").value = s.title; $("tags").value = s.tags; $("lyrics").value = s.lyrics;
+      $("dur").value = s.dur || 120; showDur();
+      ["title", "tags", "lyrics"].forEach(id => store.set("rl_draft_" + id, $(id).value));
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    const delBtn = el.querySelector('[data-a="del"]');
+    delBtn.onclick = async () => {
+      if (delBtn.dataset.sure) { await delSong(s.id); renderLibrary(); }
+      else { delBtn.dataset.sure = "1"; delBtn.textContent = "Tap again"; setTimeout(() => { delBtn.textContent = "🗑 Delete"; delete delBtn.dataset.sure; }, 2500); }
+    };
+    lib.appendChild(el);
+  }
+}
+renderLibrary();
+</script>
+</body>
+</html>
